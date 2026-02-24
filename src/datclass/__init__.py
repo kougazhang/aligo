@@ -7,7 +7,12 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, ClassVar, Callable, ForwardRef, Union, TypeVar
+from typing import Dict, ClassVar, Callable, Union, TypeVar
+
+try:
+    from typing import ForwardRef
+except ImportError:  # Python 3.6 compatibility
+    from typing import _ForwardRef as ForwardRef
 
 from .__version__ import *
 from .utils import write_file, get_identifier
