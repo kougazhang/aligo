@@ -14,7 +14,6 @@ from typing import Callable, overload, List, Dict
 
 import coloredlogs
 import qrcode
-import qrcode_terminal
 import requests
 
 import aligo
@@ -482,19 +481,37 @@ class Auth:
         :param qr_link: 二维码链接
         :return: NoReturn
         """
-        qr_img = qrcode.make(qr_link)
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=1,
+            border=1,
+        )
+        qr.add_data(qr_link)
+        qr.make(fit=True)
 
-        # try open image
-        # 1.
-        qr_img.show()
-
-        # show qrcode on console
-        # 2.
-        qrcode_terminal.draw(qr_link)
+        # 使用半高块字符（▀/▄）渲染，显著减小终端显示尺寸
+        matrix = qr.get_matrix()
+        if len(matrix) % 2 == 1:
+            matrix.append([False] * len(matrix[0]))
+        for row in range(0, len(matrix), 2):
+            top = matrix[row]
+            bottom = matrix[row + 1]
+            line = []
+            for i in range(len(top)):
+                if top[i] and bottom[i]:
+                    line.append('█')
+                elif top[i] and not bottom[i]:
+                    line.append('▀')
+                elif not top[i] and bottom[i]:
+                    line.append('▄')
+                else:
+                    line.append(' ')
+            print(''.join(line))
 
         # save image to file
-        # 3.
         qrcode_png = tempfile.mktemp('.png')
+        qr_img = qrcode.make(qr_link)
         qr_img.save(qrcode_png)
         return qrcode_png
 
