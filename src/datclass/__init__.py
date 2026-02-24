@@ -20,7 +20,14 @@ from .utils import write_file, get_identifier
 try:
     from typing import get_origin, get_args
 except ImportError:
-    from typing_extensions import get_origin, get_args
+    try:
+        from typing_extensions import get_origin, get_args
+    except ImportError:
+        def get_origin(tp):
+            return getattr(tp, '__origin__', None)
+
+        def get_args(tp):
+            return getattr(tp, '__args__', ())
 
 __all__ = [
     'DatClass',
