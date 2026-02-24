@@ -24,10 +24,16 @@ except ImportError:
         from typing_extensions import get_origin, get_args
     except ImportError:
         def get_origin(tp):
-            return getattr(tp, '__origin__', None)
+            origin = getattr(tp, '__origin__', None)
+            if origin is not None:
+                return origin
+            return getattr(tp, '__extra__', None)
 
         def get_args(tp):
-            return getattr(tp, '__args__', ())
+            args = getattr(tp, '__args__', None)
+            if args:
+                return args
+            return getattr(tp, '__union_params__', ()) or ()
 
 __all__ = [
     'DatClass',

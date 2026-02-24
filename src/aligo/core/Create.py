@@ -149,6 +149,9 @@ class Create(BaseAligo):
             progress_bar = tqdm(total=file_size, unit='B', unit_scale=True, colour='#21d789')
             for i in range(len(part_info.part_info_list)):
                 part_info_item = part_info.part_info_list[i]
+                if isinstance(part_info_item, dict):
+                    part_info_item = UploadPartInfo(**part_info_item)
+                    part_info.part_info_list[i] = part_info_item
                 data = f.read(Create.__UPLOAD_CHUNK_SIZE)
                 try:
                     resp = self._session.put(data=data, url=part_info_item.upload_url,
