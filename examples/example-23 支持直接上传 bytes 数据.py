@@ -8,6 +8,9 @@ from typing import Union
 import requests
 from tqdm import tqdm
 
+from _project_imports import use_project_packages
+use_project_packages()
+
 from aligo import (
     Aligo,
     BaseFile,

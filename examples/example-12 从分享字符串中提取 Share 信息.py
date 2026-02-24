@@ -1,3 +1,6 @@
+from _project_imports import use_project_packages
+use_project_packages()
+
 from aligo import Aligo
 
 share_msg1 = ('「心灵奇旅 4K 原盘 REMUX」https://www.aliyundrive.com/s/FYoddEbsSwV '

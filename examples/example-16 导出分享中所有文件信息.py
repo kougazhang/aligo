@@ -2,6 +2,9 @@
 import json
 from pathlib import Path
 
+from _project_imports import use_project_packages
+use_project_packages()
+
 from aligo import Aligo
 
 

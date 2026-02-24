@@ -2,10 +2,28 @@
 import smtplib
 import ssl
 import time
+from email.header import Header
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formataddr
+from email.utils import formataddr, parseaddr
+
+
+def _format_mailbox(value: str, fallback_name: str = '') -> str:
+    """Format mailbox header safely and validate ascii email address."""
+    display_name, address = parseaddr(value)
+    if not address:
+        address = value.strip()
+
+    try:
+        address.encode('ascii')
+    except UnicodeEncodeError as exc:
+        raise ValueError(f'非法邮箱地址: {value!r}') from exc
+
+    name = display_name.strip() or fallback_name
+    if name:
+        name = str(Header(name, 'utf-8'))
+    return formataddr((name, address))
 
 
 def send_email(
@@ -14,8 +32,8 @@ def send_email(
 ):
     """发送邮件"""
     msg_root = MIMEMultipart()
-    msg_root['From'] = formataddr(('aligo notify', email_user))
-    msg_root['To'] = formataddr((receiver, receiver))
+    msg_root['From'] = _format_mailbox(email_user, fallback_name='aligo notify')
+    msg_root['To'] = _format_mailbox(receiver)
     msg_root['Subject'] = f'[阿里云盘/{title}] 扫码登录'
 
     msg_root.attach(
@@ -41,4 +59,4 @@ def send_email(
             return result
         except smtplib.SMTPServerDisconnected:
             time.sleep(i * 3)
-    raise f'邮件发送失败 {receiver}'
+    raise RuntimeError(f'邮件发送失败 {receiver}')

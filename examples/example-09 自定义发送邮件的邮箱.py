@@ -1,8 +1,11 @@
+from _project_imports import use_project_packages
+use_project_packages()
+
 from aligo import Aligo, EMailConfig
 
 if __name__ == '__main__':
     email_config = EMailConfig(
-        email='<接收登录邮件的邮箱地址>',
+        email='',
         # 自配邮箱
         user='',
         password='',

@@ -1,6 +1,9 @@
 """
 截止 2022年12月06日 12时04分57秒 aligo 中没有提供直接下载分享中文件夹的方法，后期会考虑加上
 """
+from _project_imports import use_project_packages
+use_project_packages()
+
 from aligo import Aligo
 
 if __name__ == '__main__':

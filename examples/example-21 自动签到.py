@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 from typing import List, Dict
 
+from _project_imports import use_project_packages
+use_project_packages()
+
 from datclass import DatClass
 
 from aligo import Aligo
