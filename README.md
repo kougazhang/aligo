@@ -66,6 +66,23 @@ python src/aligo/cli.py --help
 python src/aligo/cli.py login
 ```
 
+### 通用安装脚本（适合老环境/不走 pip）
+
+```sh
+# 安装到 /usr/local/bin/aligo
+bash scripts/install_cli.sh --force
+
+# 或安装到当前用户 ~/.local/bin/aligo
+bash scripts/install_cli.sh --user --force
+```
+
+可选参数：
+
+- `--name <cmd>` 自定义命令名
+- `--target <dir>` 自定义安装目录
+- `--python <bin>` 指定 Python 解释器
+- `--entry <path>` 指定 CLI 入口文件路径
+
 > **Notes：** 最近官方更新了接口，导致 `get_file_list` 无法直接获取下载链接，现在需要单独使用 `get_download_url` 接口获取下载链接。
 >
 > 对于不常用（没有封装）的接口，可以直接通过 `self.post` 方法直接发送请求。
