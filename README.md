@@ -19,6 +19,53 @@ pip install -U aligo
 pip install git+https://github.com/foyoux/aligo.git
 ```
 
+## CLI 使用（Python）
+
+### 本地开发安装（推荐）
+
+在项目根目录执行：
+
+```sh
+python -m pip install -e .
+```
+
+说明：
+
+- `-e` 是可编辑安装（editable install）
+- 安装后可直接使用 `aligo` 命令
+- 修改源码后无需重新安装
+
+### 常用命令
+
+```sh
+aligo login
+aligo logout
+aligo info
+aligo ls
+aligo ls /tasks -l
+aligo mb /backup/tasks
+aligo put ./tasks /backup
+aligo get /tasks ./
+aligo cp /tasks/a.txt /tasks/a-copy.txt
+aligo mv /tasks/a-copy.txt /tasks/a-moved.txt
+aligo rm /tasks/a-moved.txt
+aligo sync ./tasks /backup/tasks --mode both
+```
+
+### 路径规则
+
+- 只支持类文件路径格式（例如：`tasks`、`/tasks/a.txt`）
+- 不支持 `aligo://` / `ali://` / `ali:` 前缀
+
+### 若未安装为命令
+
+也可以直接运行：
+
+```sh
+python src/aligo/cli.py --help
+python src/aligo/cli.py login
+```
+
 > **Notes：** 最近官方更新了接口，导致 `get_file_list` 无法直接获取下载链接，现在需要单独使用 `get_download_url` 接口获取下载链接。
 >
 > 对于不常用（没有封装）的接口，可以直接通过 `self.post` 方法直接发送请求。
