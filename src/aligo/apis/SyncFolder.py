@@ -98,6 +98,8 @@ class SyncFolder(Core):
         for f in self._core_get_file_list(
                 GetFileListRequest(remote_folder, drive_id=drive_id)
         ):
+            if isinstance(f, dict):
+                f = BaseFile(**f)
             remote_file = f.name
             if f.type == 'file' and file_filter(f):
                 self._auth.log.debug(f'过滤云端文件 {remote_file}')
