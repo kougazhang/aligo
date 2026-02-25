@@ -11,10 +11,11 @@ class FakeFolder:
 
 
 class FakeAli:
-    def __init__(self):
+    def __init__(self, dict_mode=False):
         self._seq = 0
         self.children = {"root": []}
         self.created = []
+        self.dict_mode = dict_mode
 
     def _new_id(self):
         self._seq += 1
@@ -30,17 +31,21 @@ class FakeAli:
 
     def get_file(self, file_id, drive_id=None):
         if file_id == "root":
-            return FakeFolder(file_id="root", name="/", file_type="folder")
+            root = FakeFolder(file_id="root", name="/", file_type="folder")
+            return {"file_id": root.file_id, "name": root.name, "type": root.type} if self.dict_mode else root
         for folders in self.children.values():
             for folder in folders:
                 if folder.file_id == file_id:
-                    return folder
+                    return {"file_id": folder.file_id, "name": folder.name, "type": folder.type} if self.dict_mode else folder
         raise FileNotFoundError(file_id)
 
     def get_file_list(self, parent_file_id, drive_id=None, type=None):
         if type != "folder":
             raise AssertionError("test double only supports folder listing")
-        return list(self.children.get(parent_file_id, []))
+        folders = list(self.children.get(parent_file_id, []))
+        if self.dict_mode:
+            return [{"file_id": f.file_id, "name": f.name, "type": f.type} for f in folders]
+        return folders
 
     def create_folder(self, name, parent_file_id="root", drive_id=None, check_name_mode="auto_rename"):
         existing = [f for f in self.children.get(parent_file_id, []) if f.name == name]
@@ -72,6 +77,17 @@ class SyncResolverTests(unittest.TestCase):
         self.assertEqual(ali.created[0], ("root", "backup", "refuse"))
         self.assertEqual(ali.created[1][1], "vocabulary")
         self.assertEqual(ali.created[1][2], "refuse")
+
+
+    def test_handles_dict_entries_from_get_file_list(self):
+        ali = FakeAli(dict_mode=True)
+        exact = ali.add_folder("root", "vocabulary", file_id="folder-vocabulary")
+        ali.add_folder("root", "vocabulary(1)", file_id="folder-vocabulary-1")
+
+        resolved = _resolve_sync_remote_folder(ali, "/vocabulary")
+
+        self.assertEqual(resolved["file_id"], exact.file_id)
+        self.assertEqual(ali.created, [])
 
     def test_fails_when_only_auto_renamed_siblings_exist(self):
         ali = FakeAli()

@@ -82,25 +82,39 @@ def _get_child_folders(ali: Aligo, parent_file_id: str, drive_id: str = None):
     return list(ali.get_file_list(parent_file_id=parent_file_id, drive_id=drive_id, type="folder"))
 
 
+def _folder_name(folder) -> str:
+    if isinstance(folder, dict):
+        return str(folder.get("name") or "")
+    return str(getattr(folder, "name", "") or "")
+
+
+def _folder_id(folder) -> Optional[str]:
+    if isinstance(folder, dict):
+        return folder.get("file_id")
+    return getattr(folder, "file_id", None)
+
+
 def _resolve_sync_remote_folder(ali: Aligo, remote_path: str, drive_id: str = None):
     path = _normalize_remote_path(remote_path)
     if path == "/":
         return ali.get_file("root", drive_id=drive_id)
 
-    current = ali.get_file("root", drive_id=drive_id)
+    current_id = "root"
     current_path = "/"
     for name in [part for part in path.strip("/").split("/") if part]:
-        children = _get_child_folders(ali, current.file_id, drive_id=drive_id)
-        exact_matches = [folder for folder in children if folder.name == name]
+        children = _get_child_folders(ali, current_id, drive_id=drive_id)
+        exact_matches = [folder for folder in children if _folder_name(folder) == name]
         if len(exact_matches) > 1:
             raise RuntimeError(f"duplicate remote folders found for path segment: {current_path}{name}")
         if exact_matches:
-            current = exact_matches[0]
+            current_id = _folder_id(exact_matches[0])
+            if not current_id:
+                raise RuntimeError(f"invalid remote folder entry for path segment: {current_path}{name}")
             current_path = f"{current_path}{name}/"
             continue
 
         sibling_re = re.compile(rf"^{re.escape(name)}\(\d+\)$")
-        siblings = sorted([folder.name for folder in children if sibling_re.match(folder.name)])
+        siblings = sorted([_folder_name(folder) for folder in children if sibling_re.match(_folder_name(folder))])
         if siblings:
             display = ", ".join(siblings)
             raise RuntimeError(
@@ -108,15 +122,18 @@ def _resolve_sync_remote_folder(ali: Aligo, remote_path: str, drive_id: str = No
                 "cleanup duplicate folders first, then rerun sync"
             )
 
-        current = ali.create_folder(
+        created = ali.create_folder(
             name=name,
-            parent_file_id=current.file_id,
+            parent_file_id=current_id,
             drive_id=drive_id,
             check_name_mode="refuse",
         )
+        current_id = _folder_id(created)
+        if not current_id:
+            raise RuntimeError(f"failed to create remote folder for path segment: {current_path}{name}")
         current_path = f"{current_path}{name}/"
 
-    return current
+    return ali.get_file(current_id, drive_id=drive_id)
 
 
 def _resolve_target_parent_and_name(
