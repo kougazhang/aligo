@@ -56,6 +56,8 @@ aligo sync ./tasks /backup/tasks --mode both
 
 - 只支持类文件路径格式（例如：`tasks`、`/tasks/a.txt`）
 - 不支持 `aligo://` / `ali://` / `ali:` 前缀
+- `sync` 会优先复用已存在的目标目录，不会通过自动重命名创建 `name(1)`、`name(2)` 作为正常路径
+- 若仅存在 `name(1)`/`name(2)` 这类自动重命名目录而不存在精确的 `name`，`sync` 会报错并要求先清理重复目录
 
 ### 若未安装为命令
 

@@ -7,6 +7,8 @@ __pycache__/
 *.so
 main.py
 tests
+!tests/
+!tests/test_cli_sync_resolution.py
 files
 upload_test.txt
 # Distribution / packaging

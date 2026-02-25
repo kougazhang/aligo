@@ -14,6 +14,7 @@ if __name__ == "__main__" and (__package__ is None or __package__ == ""):
 import argparse
 import json
 import logging
+import re
 from typing import Optional, Tuple
 
 from aligo import Aligo, EMailConfig, __version__, logout
@@ -75,6 +76,47 @@ def _resolve_remote_folder(ali: Aligo, remote_path: str, drive_id: str = None, c
     if folder.type != "folder":
         raise NotADirectoryError(f"remote path is not folder: {path}")
     return folder
+
+
+def _get_child_folders(ali: Aligo, parent_file_id: str, drive_id: str = None):
+    return list(ali.get_file_list(parent_file_id=parent_file_id, drive_id=drive_id, type="folder"))
+
+
+def _resolve_sync_remote_folder(ali: Aligo, remote_path: str, drive_id: str = None):
+    path = _normalize_remote_path(remote_path)
+    if path == "/":
+        return ali.get_file("root", drive_id=drive_id)
+
+    current = ali.get_file("root", drive_id=drive_id)
+    current_path = "/"
+    for name in [part for part in path.strip("/").split("/") if part]:
+        children = _get_child_folders(ali, current.file_id, drive_id=drive_id)
+        exact_matches = [folder for folder in children if folder.name == name]
+        if len(exact_matches) > 1:
+            raise RuntimeError(f"duplicate remote folders found for path segment: {current_path}{name}")
+        if exact_matches:
+            current = exact_matches[0]
+            current_path = f"{current_path}{name}/"
+            continue
+
+        sibling_re = re.compile(rf"^{re.escape(name)}\(\d+\)$")
+        siblings = sorted([folder.name for folder in children if sibling_re.match(folder.name)])
+        if siblings:
+            display = ", ".join(siblings)
+            raise RuntimeError(
+                f"remote path is ambiguous at {current_path}{name}: found auto-renamed siblings [{display}]. "
+                "cleanup duplicate folders first, then rerun sync"
+            )
+
+        current = ali.create_folder(
+            name=name,
+            parent_file_id=current.file_id,
+            drive_id=drive_id,
+            check_name_mode="refuse",
+        )
+        current_path = f"{current_path}{name}/"
+
+    return current
 
 
 def _resolve_target_parent_and_name(
@@ -269,7 +311,7 @@ def _cmd_mv(args: argparse.Namespace) -> int:
 
 def _cmd_sync(args: argparse.Namespace) -> int:
     ali = _build_client(args)
-    remote_folder = _resolve_remote_folder(ali, args.remote_path, drive_id=args.drive_id, create=True)
+    remote_folder = _resolve_sync_remote_folder(ali, args.remote_path, drive_id=args.drive_id)
 
     flag = None
     if args.mode == "local":
