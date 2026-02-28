@@ -171,7 +171,7 @@ class Auth:
             level=level,
             logger=self.log,
             milliseconds=True,
-            datefmt='%X',
+            datefmt='%Y-%m-%d %H:%M:%S',
             fmt=fmt
         )
 
